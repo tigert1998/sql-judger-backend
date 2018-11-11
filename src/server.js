@@ -32,9 +32,7 @@ app.get("/api/archive", (request, response) => {
       for (let i = 0; i < data.length; i++) {
         if (values[i].isDirectory()) result.push(data[i]);
       }
-      response.set({
-        'Access-Control-Allow-Origin': '*'
-      });
+      response.set({'Access-Control-Allow-Origin': '*'});
       response.send(result);
       response.end();
     });
@@ -43,12 +41,25 @@ app.get("/api/archive", (request, response) => {
 
 app.post("/api/submitCode", (request, response) => {
   judger.judge(3160103866, request.body.problemID, request.body.code).then((value) => {
-    response.set({
-      'Access-Control-Allow-Origin': '*'
-    });
+    response.set({'Access-Control-Allow-Origin': '*'});
     response.send(value);
     response.end();
   });
+});
+
+app.get("/api/description/:problemID", (request, response) => {
+	let problemID = request.params.problemID;
+	fs.readFile(path.join(archivePath, problemID, 'description.md'), (error, data) => {
+		if (error) {
+			response.set({'Access-Control-Allow-Origin': '*'});
+			response.send('');
+			response.end();
+		} else {
+			response.set({'Access-Control-Allow-Origin': '*'});
+			response.send(data);
+			response.end();
+		}
+	});
 });
 
 app.listen(port, () => {
