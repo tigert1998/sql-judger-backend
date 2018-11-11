@@ -1,2 +1,18 @@
-select concat(name, "(", left(Occupation, 1), ")") from OCCUPATIONS order by name;
-select concat("There are a total of ", t.total, " ", lower(t.Occupation), "s.") from (select Occupation, count(*) as total from OCCUPATIONS group by Occupation) as t order by t.total, t.Occupation;
+select value
+  from (
+        select concat(Name, '(', substr(Occupation, 1, 1), ')') as value,
+               1 as key1,
+               Name as key2,
+               NULL as key3
+          from OCCUPATIONS
+
+        union all
+
+        select concat('There are a total of ', count(*), ' ', lower(Occupation), 's.') as value,
+               2 as key1,
+               count(*) as key2,
+               Occupation as key3
+          from OCCUPATIONS
+        group by Occupation
+       ) t
+order by key1, key2, key3;
