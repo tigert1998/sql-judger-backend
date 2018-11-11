@@ -13,7 +13,16 @@ const
 const
   app = express();
 
-app.use(express.json());
+app.use((request, response, next) => {
+  response.header('Access-Control-Allow-Origin', '*');
+  response.header('Access-Control-Allow-Methods', 'GET, PUT, POST, DELETE, OPTIONS');
+  response.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With');
+  if ('OPTIONS' === request.method) {
+    response.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 app.get("/api/archive", (request, response) => {
   response.type("json");
@@ -32,7 +41,6 @@ app.get("/api/archive", (request, response) => {
       for (let i = 0; i < data.length; i++) {
         if (values[i].isDirectory()) result.push(data[i]);
       }
-      response.set({'Access-Control-Allow-Origin': '*'});
       response.send(result);
       response.end();
     });
@@ -40,26 +48,29 @@ app.get("/api/archive", (request, response) => {
 });
 
 app.post("/api/submitCode", (request, response) => {
-  judger.judge(3160103866, request.body.problemID, request.body.code).then((value) => {
-    response.set({'Access-Control-Allow-Origin': '*'});
-    response.send(value);
-    response.end();
+  let bodyStr = '';
+  request.on("data", (chunk) => {
+    bodyStr += chunk.toString();
+  });
+  request.on("end",() => {
+    let body = JSON.parse(bodyStr);
+    judger.judge(3160103866, body.problemID, body.code).then((value) => {
+      response.status(200).send(value);
+    });
   });
 });
 
 app.get("/api/description/:problemID", (request, response) => {
-	let problemID = request.params.problemID;
-	fs.readFile(path.join(archivePath, problemID, 'description.md'), (error, data) => {
-		if (error) {
-			response.set({'Access-Control-Allow-Origin': '*'});
-			response.send('');
-			response.end();
-		} else {
-			response.set({'Access-Control-Allow-Origin': '*'});
-			response.send(data);
-			response.end();
-		}
-	});
+  let problemID = request.params.problemID;
+  fs.readFile(path.join(archivePath, problemID, 'description.md'), (error, data) => {
+    if (error) {
+      response.send('');
+      response.end();
+    } else {
+      response.send(data);
+      response.end();
+    }
+  });
 });
 
 app.listen(port, () => {
